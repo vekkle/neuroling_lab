@@ -1,0 +1,66 @@
+### BE CAREFUL! The following script is not a universal solution.
+### info from: http://stackoverflow.com/questions/7833807/get-wav-file-length-or-duration
+
+# Used to walk through the directory in order to collect list of audio files by in-built methods.
+import os
+# Used to open audiofiles and measuring its length.
+import wave
+import contextlib
+
+
+# Two backslashes for Windows systems. For Unix-based and Mac OS minor alternations may be required.
+def listing_files():
+    current_directory = os.getcwd()
+    audio_directory = current_directory + '\\audio'
+    return os.walk(audio_directory)
+
+
+# The duration of an audiofile is equal to the number of frames divided by the framerate (frames per second).
+def measuring_audio_length(filename):
+    path_to_wav = os.getcwd() + '\\audio\\' + filename
+    with contextlib.closing(wave.open(path_to_wav, 'r')) as f:
+        frames = f.getnframes()
+        rate = f.getframerate()
+        duration = frames / float(rate)
+    return filename, duration
+
+
+# Making a csv-table with semicolon (;) as a separator: understandable by Notepad++, Excel, Open/LibreOffice, etc.
+# str() function for one_pair[1] variable is obligatory because the presumed data type for this variable is float,
+# so one have to convert it to the string type at first in order to write down in the file eventually.
+def making_table(list_of_lengths):
+    final_table = ''
+    for one_pair in list_of_lengths:
+        final_table += one_pair[0] + ';' + str(one_pair[1]) + '\n'
+    file_table = open('audio_lengths.csv', 'w', encoding='utf-8')
+    file_table.write(final_table)
+    file_table.close()
+
+
+# Human-readable instructions are placed at the beginning of the script just in case.
+print("Please, create a folder named audio in the same folder with this script.")
+print("Put all the files for analysis in the created folder.")
+print("If you are ready, press any key to continue.")
+print("Otherwise do the things listed above and then run this script again.")
+input()
+
+# Making an iterator object of all the .wav-files to measure. Method os.walk in the listing_files function
+# walks through the folder named "audio" in the same folder as the script and collects information
+# about all the files and folders in the folder "audio". It makes an iterator object that is converted
+# to a tuple by the script. It is useful for later processing.
+audios_tuple = listing_files()
+audios_tuple = tuple(audios_tuple)
+# audios_tuple[0] stands for the only element in resulted tuple - another tuple (surprise!).
+# audios_tuple[0][0] stands for the path to the processed directory (the very first element in the tuple
+# mentioned above).
+# audios_tuple[0][2] stands for the list of files in the processed directory, i. e. list of audiofiles (the last
+# element in the tuple mentioned above).
+audio_path = audios_tuple[0][0]
+wav_list = audios_tuple[0][2]
+
+# Making a special list for all pairs of filename and the file duration.
+all_list = []
+for one_file in wav_list:
+    all_list.append(measuring_audio_length(one_file))
+# Writing down the results in the csv-table.
+making_table(all_list)
